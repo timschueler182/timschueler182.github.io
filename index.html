@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Red Maple Designs - Order</title>
+  <title>Red Maple Designs - Order & QR Generator</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -57,7 +57,15 @@
       font-weight: bold;
       font-size: 1.2rem;
     }
+    .qr-section {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    canvas {
+      margin: 0.5rem;
+    }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <header>Red Maple Designs</header>
@@ -67,6 +75,21 @@
     <div id="cart-items"></div>
     <div class="total" id="cart-total"></div>
     <button id="checkout-btn">Checkout with Venmo</button>
+
+    <div class="qr-section">
+      <h3>QR Code Generator</h3>
+      <p>Select an item and quantity to generate a QR code that auto-adds to the cart when scanned.</p>
+      <select id="qr-item">
+        <option value="shirt">Shirt ($25)</option>
+        <option value="statue">3D Print Statue ($20)</option>
+        <option value="mini">3D Mini ($5)</option>
+        <option value="fidget">Fidget ($5)</option>
+        <option value="keychain">Keychain ($2)</option>
+      </select>
+      <input type="number" id="qr-qty" min="1" value="1" style="width:60px;margin:0 0.5rem;">
+      <button onclick="generateQR()">Generate QR</button>
+      <div id="qr-code"></div>
+    </div>
   </div>
 
   <script>
@@ -110,12 +133,25 @@
       }
       note = note.slice(0, -2);
 
-      // Open Venmo link
       const venmoLink = `https://venmo.com/?txn=pay&audience=friends&recipients=redmapledesigns&amount=${total}&note=${encodeURIComponent(note)}`;
       window.open(venmoLink, '_blank');
     }
 
-    // Parse URL params for QR codes
+    // QR Generator Function
+    function generateQR() {
+      const item = document.getElementById('qr-item').value;
+      const qty = document.getElementById('qr-qty').value;
+      const qrContainer = document.getElementById('qr-code');
+      qrContainer.innerHTML = '';
+      const url = `${window.location.origin}${window.location.pathname}?item=${item}&qty=${qty}`;
+      new QRCode(qrContainer, {
+        text: url,
+        width: 150,
+        height: 150
+      });
+    }
+
+    // Parse URL params for QR scan
     const params = new URLSearchParams(window.location.search);
     const item = params.get('item');
     const qty = parseInt(params.get('qty')) || 1;
@@ -126,7 +162,6 @@
     }
 
     renderCart();
-
     document.getElementById('checkout-btn').addEventListener('click', checkout);
   </script>
 </body>
