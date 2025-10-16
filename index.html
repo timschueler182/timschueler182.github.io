@@ -43,6 +43,7 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 1rem;
+      margin: 0.3rem;
     }
     button:hover {
       background-color: #a00000;
@@ -67,6 +68,12 @@
       align-items: center;
       margin: 0.3rem 0;
     }
+    .button-row {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
     canvas {
       margin: 0.5rem;
     }
@@ -80,7 +87,10 @@
     <h2>Your Cart</h2>
     <div id="cart-items"></div>
     <div class="total" id="cart-total"></div>
-    <button id="checkout-btn">Checkout with Venmo</button>
+    <div class="button-row">
+      <button id="checkout-btn">Checkout with Venmo</button>
+      <button id="clear-cart-btn" style="background-color:#555;">Clear Cart</button>
+    </div>
 
     <div class="qr-section">
       <h3>Multi-Item QR Code Generator</h3>
@@ -126,6 +136,12 @@
       totalContainer.textContent = total > 0 ? `Total: $${total.toFixed(2)}` : 'Your cart is empty';
     }
 
+    function clearCart() {
+      localStorage.removeItem('cart');
+      renderCart();
+      alert('Cart cleared.');
+    }
+
     function checkout() {
       const cart = JSON.parse(localStorage.getItem('cart')) || {};
       if (Object.keys(cart).length === 0) return alert('Your cart is empty');
@@ -140,9 +156,11 @@
 
       const venmoLink = `https://venmo.com/?txn=pay&audience=friends&recipients=redmapledesigns&amount=${total}&note=${encodeURIComponent(note)}`;
       window.open(venmoLink, '_blank');
+
+      // Automatically clear cart after checkout
+      clearCart();
     }
 
-    // Multi-Item QR Generator
     function generateMultiQR() {
       const checkboxes = document.querySelectorAll('#item-options input[type=checkbox]:checked');
       const items = [];
@@ -164,7 +182,6 @@
       });
     }
 
-    // Parse URL params for multiple items
     const params = new URLSearchParams(window.location.search);
     const items = params.get('item') ? params.get('item').split(',') : [];
     const qtys = params.get('qty') ? params.get('qty').split(',').map(q => parseInt(q) || 1) : [];
@@ -178,6 +195,7 @@
 
     renderCart();
     document.getElementById('checkout-btn').addEventListener('click', checkout);
+    document.getElementById('clear-cart-btn').addEventListener('click', clearCart);
   </script>
 </body>
 </html>
