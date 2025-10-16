@@ -61,6 +61,12 @@
       margin-top: 2rem;
       text-align: center;
     }
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0.3rem 0;
+    }
     canvas {
       margin: 0.5rem;
     }
@@ -77,17 +83,16 @@
     <button id="checkout-btn">Checkout with Venmo</button>
 
     <div class="qr-section">
-      <h3>QR Code Generator</h3>
-      <p>Select an item and quantity to generate a QR code that auto-adds to the cart when scanned.</p>
-      <select id="qr-item">
-        <option value="shirt">Shirt ($25)</option>
-        <option value="statue">3D Print Statue ($20)</option>
-        <option value="mini">3D Mini ($5)</option>
-        <option value="fidget">Fidget ($5)</option>
-        <option value="keychain">Keychain ($2)</option>
-      </select>
-      <input type="number" id="qr-qty" min="1" value="1" style="width:60px;margin:0 0.5rem;">
-      <button onclick="generateQR()">Generate QR</button>
+      <h3>Multi-Item QR Code Generator</h3>
+      <p>Select your items and quantities to generate a QR code that auto-adds them all to the cart when scanned.</p>
+      <div id="item-options">
+        <div class="item-row"><label><input type="checkbox" value="shirt"> Shirt ($25)</label><input type="number" id="qty-shirt" min="1" value="1" style="width:60px"></div>
+        <div class="item-row"><label><input type="checkbox" value="statue"> 3D Print Statue ($20)</label><input type="number" id="qty-statue" min="1" value="1" style="width:60px"></div>
+        <div class="item-row"><label><input type="checkbox" value="mini"> 3D Mini ($5)</label><input type="number" id="qty-mini" min="1" value="1" style="width:60px"></div>
+        <div class="item-row"><label><input type="checkbox" value="fidget"> Fidget ($5)</label><input type="number" id="qty-fidget" min="1" value="1" style="width:60px"></div>
+        <div class="item-row"><label><input type="checkbox" value="keychain"> Keychain ($2)</label><input type="number" id="qty-keychain" min="1" value="1" style="width:60px"></div>
+      </div>
+      <button onclick="generateMultiQR()">Generate QR</button>
       <div id="qr-code"></div>
     </div>
   </div>
@@ -137,13 +142,21 @@
       window.open(venmoLink, '_blank');
     }
 
-    // QR Generator Function
-    function generateQR() {
-      const item = document.getElementById('qr-item').value;
-      const qty = document.getElementById('qr-qty').value;
+    // Multi-Item QR Generator
+    function generateMultiQR() {
+      const checkboxes = document.querySelectorAll('#item-options input[type=checkbox]:checked');
+      const items = [];
+      const qtys = [];
+      checkboxes.forEach(cb => {
+        const item = cb.value;
+        const qty = document.getElementById(`qty-${item}`).value;
+        items.push(item);
+        qtys.push(qty);
+      });
+      if (items.length === 0) return alert('Select at least one item.');
+      const url = `${window.location.origin}${window.location.pathname}?item=${items.join(',')}&qty=${qtys.join(',')}`;
       const qrContainer = document.getElementById('qr-code');
       qrContainer.innerHTML = '';
-      const url = `${window.location.origin}${window.location.pathname}?item=${item}&qty=${qty}`;
       new QRCode(qrContainer, {
         text: url,
         width: 150,
@@ -151,14 +164,16 @@
       });
     }
 
-    // Parse URL params for QR scan
+    // Parse URL params for multiple items
     const params = new URLSearchParams(window.location.search);
-    const item = params.get('item');
-    const qty = parseInt(params.get('qty')) || 1;
+    const items = params.get('item') ? params.get('item').split(',') : [];
+    const qtys = params.get('qty') ? params.get('qty').split(',').map(q => parseInt(q) || 1) : [];
 
-    if (item && prices[item]) {
-      addToCart(item, qty);
-      alert(`${qty} ${item}(s) added to your cart!`);
+    if (items.length > 0) {
+      items.forEach((item, index) => {
+        if (prices[item]) addToCart(item, qtys[index] || 1);
+      });
+      alert('Items added to your cart!');
     }
 
     renderCart();
